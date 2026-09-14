@@ -562,7 +562,7 @@
   // Reemplazar con las credenciales de Supabase :)
   const SUPABASE_URL = 'https://uqeelwozushhebekgqkl.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_Uyh9D-AEpYxALqI1cMdu6g_V3s0l6j0';
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   var MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
   var MAX_REGALOS = 10;
@@ -573,10 +573,10 @@
     try {
       // Fetch all data in parallel
       var [nombresRes, regalosRes, linksRes, imagenesRes] = await Promise.all([
-        supabase.from('nombres').select('nombre').order('orden'),
-        supabase.from('regalos').select('id, nombre, regalo'),
-        supabase.from('links').select('id, nombre, link'),
-        supabase.from('imagenes').select('id, nombre, url, path')
+        supabaseClient.from('nombres').select('nombre').order('orden'),
+        supabaseClient.from('regalos').select('id, nombre, regalo'),
+        supabaseClient.from('links').select('id, nombre, link'),
+        supabaseClient.from('imagenes').select('id, nombre, url, path')
       ]);
 
       if (nombresRes.error) throw nombresRes.error;
@@ -703,7 +703,7 @@
             del.className = 'link-delete';
             del.textContent = 'x';
             del.addEventListener('click', async function() {
-              await supabase.from('regalos').delete().eq('id', item.id);
+              await supabaseClient.from('regalos').delete().eq('id', item.id);
               regalosState.splice(idx, 1);
               renderRegalos();
             });
@@ -715,7 +715,7 @@
         input.addEventListener('keydown', async function(e) {
           if (e.key === 'Enter' && this.value.trim()) {
             if (regalosState.length < MAX_REGALOS) {
-              var res = await supabase.from('regalos').insert({
+              var res = await supabaseClient.from('regalos').insert({
                 nombre: nombre,
                 regalo: this.value.trim()
               }).select();
@@ -758,21 +758,21 @@
           (async function() {
             try {
               // Upload to Supabase Storage
-              var upRes = await supabase.storage
+              var upRes = await supabaseClient.storage
                 .from('gift-images')
                 .upload(filePath, file);
 
               if (upRes.error) throw upRes.error;
 
               // Get public URL
-              var urlRes = supabase.storage
+              var urlRes = supabaseClient.storage
                 .from('gift-images')
                 .getPublicUrl(filePath);
 
               var publicUrl = urlRes.data.publicUrl;
 
               // Save URL in database
-              var dbRes = await supabase.from('imagenes').insert({
+              var dbRes = await supabaseClient.from('imagenes').insert({
                 nombre: nombre,
                 url: publicUrl,
                 path: filePath
@@ -818,9 +818,9 @@
           del.textContent = 'x';
           del.addEventListener('click', async function() {
             // Delete from storage
-            await supabase.storage.from('gift-images').remove([imgObj.path]);
+            await supabaseClient.storage.from('gift-images').remove([imgObj.path]);
             // Delete from database
-            await supabase.from('imagenes').delete().eq('id', imgObj.id);
+            await supabaseClient.from('imagenes').delete().eq('id', imgObj.id);
             wrapper.remove();
           });
           wrapper.appendChild(del);
@@ -849,7 +849,7 @@
             del.className = 'link-delete';
             del.textContent = 'x';
             del.addEventListener('click', async function() {
-              await supabase.from('links').delete().eq('id', item.id);
+              await supabaseClient.from('links').delete().eq('id', item.id);
               linksState.splice(idx, 1);
               renderLinks();
             });
@@ -865,7 +865,7 @@
             newInput.placeholder = 'Pega un enlace para tu wishlist y presiona Enter...';
             newInput.addEventListener('keydown', async function(e) {
               if (e.key === 'Enter' && this.value.trim()) {
-                var res = await supabase.from('links').insert({
+                var res = await supabaseClient.from('links').insert({
                   nombre: nombre,
                   link: this.value.trim()
                 }).select();
